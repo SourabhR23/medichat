@@ -12,7 +12,7 @@ from app.s3_utils import (
 from app.chat_utils import get_chat_model, ask_chat_model
 from app.config import EURI_API_KEY
 from app.email_utils import send_medical_analytics, generate_document_insights, validate_email, send_support_ticket
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 import time
 
 
