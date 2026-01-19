@@ -5,6 +5,9 @@ import os
 import requests
 from app.config import EMBEDDING_MODEL,HF_API_TOKEN   # e.g. "sentence-transformers/all-MiniLM-L6-v2"
 from app.pdf_utils import clean_text
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Create client ONCE (important)
 hf_client = InferenceClient(
@@ -13,7 +16,6 @@ hf_client = InferenceClient(
 )
 
 # ChromaDB Cloud Configuration
-import os
 CHROMA_API_KEY = os.getenv('CHROMA_API_KEY', '')
 CHROMA_TENANT = os.getenv('CHROMA_TENANT', '')
 CHROMA_DATABASE = os.getenv('CHROMA_DATABASE', 'medibot')
@@ -36,47 +38,12 @@ def _hf_embedding_request(texts: List[str]) -> List[List[float]]:
     if not HF_API_TOKEN:
         raise RuntimeError("HF_API_TOKEN is not set")
 
-    # E5 models REQUIRE prefix
+    # E5 models REQUIRE prefixes
     inputs = [f"passage: {t}" for t in texts]
 
-    # ✅ Use feature_extraction for serverless inference
-    # Note: feature_extraction returns List[List[float]] directly if passing a list
     embeddings = hf_client.feature_extraction(inputs)
 
     return embeddings
-
-"""def _hf_embedding_request(texts):
-    if not HF_API_TOKEN:
-        raise RuntimeError("HF_API_TOKEN is not set")
-
-    url = (
-        "https://router.huggingface.co/hf-inference/pipeline/feature-extraction/"
-        f"{EMBEDDING_MODEL}"
-    )
-
-    headers = {
-        "Authorization": f"Bearer {HF_API_TOKEN}",
-        "Content-Type": "application/json",
-    }
-
-    payload = {
-        "inputs": [f"passage: {t}" for t in texts]
-    }
-
-    response = requests.post(url, headers=headers, json=payload, timeout=60)
-    print("HF API response:", response.text)
-
-    if response.status_code != 200:
-        
-        raise RuntimeError(
-            f"Hugging Face API error {response.status_code}: {response.text}"
-        )
-
-    data = response.json()
-    if isinstance(data, list) and isinstance(data[0], list):
-        return data
-
-    raise RuntimeError(f"Unexpected HF response: {data}")"""
 
 def get_embeddings(texts: List[str]) -> List[List[float]]:
     """
@@ -91,14 +58,11 @@ def get_embeddings(texts: List[str]) -> List[List[float]]:
     if not texts:
         return []
 
-    # Optional: clean text with your existing utility
     cleaned_texts = [clean_text(t) for t in texts]
 
     try:
-        embeddings = _hf_embedding_request(cleaned_texts)
-        return embeddings
+        return _hf_embedding_request(cleaned_texts)
     except Exception as e:
-        # Log and return empty list on failure
         print(f"Error generating embeddings from Hugging Face API: {e}")
         return []
     
@@ -176,20 +140,16 @@ def clear_chroma_collection():
         return False
 
 def ensure_collection_exists():
-    """Ensure ChromaDB collection exists and is not soft deleted"""
     try:
         client = get_chroma_client()
-        try:
-            # Try to get existing collection
-            collection = client.get_collection(CHROMA_COLLECTION)
-            print(f"📂 Using existing collection: {CHROMA_COLLECTION}")
-            return collection
-        except Exception as e:
-            print(f"📂 Collection doesn't exist or is soft deleted: {e}")
-            # Create new collection
-            collection = client.create_collection(CHROMA_COLLECTION)
-            print(f"📂 Created new collection: {CHROMA_COLLECTION}")
-            return collection
+
+        collection = client.get_or_create_collection(
+            name=CHROMA_COLLECTION
+        )
+
+        print(f"📂 Using collection: {CHROMA_COLLECTION}")
+        return collection
+
     except Exception as e:
         print(f"❌ Error ensuring collection exists: {e}")
         return None

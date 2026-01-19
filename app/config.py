@@ -1,22 +1,19 @@
 import os
 from dotenv import load_dotenv
 
-# load .env file
+# Load environment variables from .env file
 load_dotenv()
 
-# Self-hosted Model Configuration
-#OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "http://62.169.159.70:8000/v1")
-#OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "not-needed")
-#OPENAI_EMBEDDING_BASE = os.getenv("OPENAI_EMBEDDING_BASE", "http://62.169.159.36:8000/v1")
-#OPENAI_EMBEDDING_KEY = os.getenv("OPENAI_EMBEDDING_KEY", "dummy")
-
-# Legacy Euri AI Configuration (keeping for backward compatibility)
+# Legacy Euri AI Configuration 
 EURI_API_KEY = os.getenv("EURI_API_KEY")
+print(f"EURI_API_KEY: {EURI_API_KEY}")
 
 # Model Configuration
 HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4.1-nano")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+
+print(f"HF_API_TOKEN: {HF_API_TOKEN}")
 
 # Email Configuration
 EMAIL_CONFIG = {
